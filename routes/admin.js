@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Project = require('../models/Project');
 const Resource = require('../models/Resource');
 const router = express.Router();
-
+const handleUpload = require('../middleware/upload');
 router.use(verifyToken);
 router.use(authorizeRole(['admin']));
 
@@ -58,5 +58,15 @@ router.get('/project/:id/resources', async (req, res) => {
   const resources = await Resource.find({ project_id: req.params.id }).populate('user_id', 'name email');
   res.json(resources);
 });
+
+// After PUT /api/admin/project/:id
+// router.put('/project/:id/documents', handleUpload, async (req, res) => {
+//   const project = await Project.findByIdAndUpdate(
+//     req.params.id,
+//     { $push: { documents: req.fileUrl } },
+//     { new: true }
+//   );
+//   res.json(project);
+// });
 
 module.exports = router;

@@ -8,7 +8,7 @@ mongoose.connect(process.env.MONGO_URI)
     await User.create({
       name: 'Admin User',
       email: 'admin@example.com',
-      password: hashed,
+      password: "Admin@123",
       role: 'admin'
     });
     console.log('Admin created');
