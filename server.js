@@ -4,9 +4,14 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+// allow the specific frontend origin (and enable cookies/auth if needed)
+app.use(cors({
+  origin: 'https://rms-ui-beryl.vercel.app',
+  credentials: true
+}));
+
 app.use(express.json());
-app.use(express.json({ limit: '10mb' }));  
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 mongoose.connect(process.env.MONGO_URI)
