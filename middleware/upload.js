@@ -1,14 +1,16 @@
 const multer = require('multer');
-const AWS = require('aws-sdk');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 require('dotenv').config();
 
-AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION || 'us-east-1'
+// Initialize S3 v3 client
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
 });
 
-const s3 = new AWS.S3();
 const upload = multer({ storage: multer.memoryStorage() });
 
 const uploadToS3 = upload.single('file');
@@ -16,7 +18,7 @@ const uploadToS3 = upload.single('file');
 const handleUpload = (req, res, next) => {
   uploadToS3(req, res, async (err) => {
     if (err) return res.status(400).json({ msg: err.message });
-    if (!req.file) return res.status(400).json({ msg: 'No file' });
+    if (!req.file) return res.status(400).json({ msg: 'No file uploaded' });
 
     const params = {
       Bucket: process.env.AWS_BUCKET_NAME,
@@ -26,13 +28,15 @@ const handleUpload = (req, res, next) => {
     };
 
     try {
-      const { Location } = await s3.upload(params).promise();
-      req.fileUrl = Location;
+      const command = new PutObjectCommand(params);
+      await s3Client.send(command);
+      req.fileUrl = `https://${params.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
       next();
     } catch (err) {
-      res.status(500).json({ msg: err.message });
+      console.error('S3 Upload Error:', err);
+      res.status(500).json({ msg: 'Upload failed: ' + err.message });
     }
   });
 };
 
-module.exports = { handleUpload };
+module.exports = { handleUpload };  // Ensure this export
